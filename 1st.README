@@ -1,0 +1,46 @@
+
+Hello Yue,					9th March
+
+Here's some code that connects a wxWidgets GUI with gdb on a Linux system
+(and with a fakegdb program on macOS).  The files include Makefiles which
+compile the example cleanly on both Linux and macOS.
+
+In Makefile.wx you will only need to change the value of  WXCONFIG  to its
+location on *your* system, which will be different to mine.
+
+    -rw-------@ 1 chris  staff  2374 Mar  5 14:03 1st.README
+    -rw-r--r--@ 1 chris  staff   352 Mar  4 17:42 Makefile
+    -rw-------@ 1 chris  staff  2467 Mar  4 17:17 Makefile.wx
+    -rw-------@ 1 chris  staff  1956 Mar  5 08:23 fakegdb.c
+    drwxr-xr-x@ 3 chris  staff    96 Mar  5 13:45 foryue.app
+    -rw-r--r--@ 1 chris  staff  5246 Mar  8 14:36 foryue.cpp
+    -rw-------@ 1 chris  staff  1524 Mar  8 14:43 foryue.h
+    -rw-------@ 1 chris  staff  7043 Mar  8 14:40 gui.cpp
+    -rw-------@ 1 chris  staff   195 Mar  4 17:18 student.c
+    -rw-------@ 1 chris  staff   743 Mar  8 14:36 wxstuff.h
+
+You should be able to compile and run it with:
+
+    shell>  make
+    ....
+    shell>  ./foryue  student.c
+
+
+-------
+The basic idea is to use two Linux pipes (communication channels) to support
+communication between the GUI and the (new, external) gdb process. We need
+one pipe to enable the GUI to write to gdb, and another to read gdb's output.
+
+My simple GUI example has two simple panels - InPanel is used to send
+commands to gdb (via a textbox or a buttons), and OutPanel reads from gdb
+and displays the lines on its panel.
+
+I'm sure that I write wxWidgets and C++ code differently to you, so
+hopefully there's enough comments in the code for you to understand the
+ideas.  But please ask any questions that you have.  When you understand
+what's happening, you're welcome to reuse any of the code you want.
+
+Will love to know where you are up to. Good luck,
+
+Chris,
+

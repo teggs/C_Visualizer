@@ -1,0 +1,96 @@
+#  Generic Makefile for wxWidgets projects, written by Chris.McDonald@uwa.edu.au, 2015-
+#  under licence - https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+ifndef NAME
+    $(error variable NAME is undefined)
+endif
+
+WXVERSION	= 3.0.4
+
+OS := $(shell uname)
+ifeq ($(OS),Darwin)					# for macOS
+    CC		= clang
+    CXX		= clang++
+    CXXOPTS	= -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+    SOFLAGS	= -bundle -flat_namespace -undefined suppress
+    LD		= clang++
+    LDFLAGS	= -stdlib=libc++
+    WXCONFIG	= /usr/local/src/wxWidgets-$(WXVERSION)/install/bin/wx-config
+
+else							# assuming Linux
+    CC		= cc
+    CXX		= c++
+    SOFLAGS	= -fPIC -rdynamic -shared
+    LD		= c++
+    LDFLAGS	= -Wl,--export-dynamic
+    WXCONFIG	= /usr/bin/wx-config
+endif
+
+CPPFLAGS	+= -I. `$(WXCONFIG) --cppflags`
+
+WARNINGS	= -Wall -Werror -Wundef \
+		  -Wunused-parameter -Wno-unused-result -Wno-overloaded-virtual
+
+COPTS		+= \
+		-std=c99 \
+		-O3
+
+CXXOPTS		+= \
+		-std=c++17 \
+		-O3 \
+		-Wno-ctor-dtor-privacy \
+		-Wno-deprecated-declarations \
+		-fno-common \
+		-Woverloaded-virtual \
+		-fvisibility-inlines-hidden
+
+CFLAGS		= $(COPTS)   $(CPPFLAGS) $(WARNINGS)
+CXXFLAGS	= $(CXXOPTS) $(CPPFLAGS) $(WARNINGS)
+
+LDFLAGS		+= -std=c++17
+LIBS		+= `$(WXCONFIG) --libs`
+
+# ---------------------------------------------------------------
+
+ifeq ($(OS),Darwin)					# for macOS
+APPDIR		= $(NAME).app
+C		= $(APPDIR)/Contents
+R		= $(C)/Resources
+APPEXE		= $(C)/MacOS/$(NAME)
+
+else							# assuming Linux
+APPEXE		= $(NAME)
+endif
+
+all:	$(APPEXE) $(SHAREDOBJECTS) $(OTHERPROGRAMS)
+
+$(APPEXE): 	$(DEPENDENCIES)
+	@echo "linking  " $(NAME)
+	@date '+char *COMPILED = (char *)"%r %A %d %B %Y";' > compiled.cpp
+	@$(CXX) $(CXXFLAGS) -c compiled.cpp
+	@$(CXX) $(LDFLAGS) -o $(APPEXE) $(OBJS) compiled.o $(LIBS)
+ifeq ($(OS),Darwin)					# for macOS
+	@SetFile -t APPL $(APPEXE)
+	@[ -f $(NAME) ] || ln -s $(APPEXE)
+endif
+	@rm -f compiled.*
+
+
+%.o:	%.cpp $(HEADERS)
+	@echo "compiling" $<
+	@$(CXX) $(DEFINES) $(CXXFLAGS) -c -o $@ $<
+
+%.so:	%.cpp $(HEADERS)
+	@echo "compiling" $<
+	@$(CXX) $(DEFINES) $(CXXFLAGS) $(SOFLAGS) -o $@ $<
+
+%.o:	%.c $(HEADERS)
+	@echo "   cc   " $<
+	@$(CC) $(DEFINES) $(CFLAGS) -c -o $@ $<
+
+# ---------------------------------------------------------------
+
+clean:
+	@rm -rf $(NAME) $(APPEXE) compiled.* *.o *.so
+	@$(MAKE) extraclean
+
